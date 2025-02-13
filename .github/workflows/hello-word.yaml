@@ -2,7 +2,7 @@ name: hello word
 on:
   push: 
     branches: [main]
-job:
+jobs:
   say-hello:
     runs-on: windows-latest
     steps:
