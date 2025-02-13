@@ -20,7 +20,7 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASS }}
           local-dir: ./  # Thư mục chứa code của bạn (điều chỉnh nếu cần)
-          server-dir: /htdocs/  # Thư mục public của InfinityFree
+          server-dir: /kegusy.kesug.com/htdocs/shoes/  # Thư mục public của InfinityFree
           exclude: |
             **/.git*
             **/.github*
