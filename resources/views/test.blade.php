@@ -23,7 +23,7 @@
 
 
     <!-- Start Banner Hero -->
-    <div id="template-mo-zay-hero-carousel" class="carousel slide" data-bs-ride="carousel">
+    {{-- <div id="template-mo-zay-hero-carousel" class="carousel slide" data-bs-ride="carousel">
         <ol class="carousel-indicators">
             <li data-bs-target="#template-mo-zay-hero-carousel" data-bs-slide-to="0" class="active"></li>
             <li data-bs-target="#template-mo-zay-hero-carousel" data-bs-slide-to="1"></li>
@@ -105,6 +105,12 @@
             role="button" data-bs-slide="next">
             <i class="fas fa-chevron-right"></i>
         </a>
+    </div> --}}
+
+    <div id="container">
+        <div id="loading-info">Loading model...</div>
+        <div id="controls">
+        </div>
     </div>
     <!-- End Banner Hero -->
 
@@ -122,17 +128,20 @@
         </div>
         <div class="row">
             <div class="col-12 col-md-4 p-5 mt-3">
-                <a href="#"><img src="{{asset('img//theme/category_img_01.jpg')}}" class="rounded-circle img-fluid border"></a>
+                <a href="#"><img src="{{asset('img//theme/category_img_01.jpg')}}"
+                        class="rounded-circle img-fluid border"></a>
                 <h5 class="text-center mt-3 mb-3">Watches</h5>
                 <p class="text-center"><a class="btn btn-success">Go Shop</a></p>
             </div>
             <div class="col-12 col-md-4 p-5 mt-3">
-                <a href="#"><img src="{{asset('img/theme/category_img_02.jpg')}}" class="rounded-circle img-fluid border"></a>
+                <a href="#"><img src="{{asset('img/theme/category_img_02.jpg')}}"
+                        class="rounded-circle img-fluid border"></a>
                 <h2 class="h5 text-center mt-3 mb-3">Shoes</h2>
                 <p class="text-center"><a class="btn btn-success">Go Shop</a></p>
             </div>
             <div class="col-12 col-md-4 p-5 mt-3">
-                <a href="#"><img src="{{asset('img/theme/category_img_03.jpg')}}" class="rounded-circle img-fluid border"></a>
+                <a href="#"><img src="{{asset('img/theme/category_img_03.jpg')}}"
+                        class="rounded-circle img-fluid border"></a>
                 <h2 class="h5 text-center mt-3 mb-3">Accessories</h2>
                 <p class="text-center"><a class="btn btn-success">Go Shop</a></p>
             </div>
@@ -233,4 +242,175 @@
         </div>
     </section>
     <!-- End Featured Product -->
+
+    // Import Three.js từ CDN
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.7/dat.gui.min.js"></script>
+    // Import GLTFLoader để đọc file GLB
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    // Import OrbitControls để điều khiển camera
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        // Khai báo các biến cần thiết
+        let container, camera, scene, renderer, model, controls;
+        let currentScale = 5; // Giá trị scale ban đầu
+
+        // Đường dẫn đến file 3D GLB
+        // Lưu ý: File GLB nên được đặt trong thư mục public
+        const modelPath = "{{ asset('models/air_jordan_4_lightning_gs.glb') }}";
+
+        // Khởi tạo và chạy
+        init();
+        animate();
+
+        function init() {
+            // Lấy container và thiết lập kích thước
+            container = document.getElementById('container');
+
+            // Thiết lập chiều rộng full màn hình
+            container.style.width = '100%';
+            // Thiết lập chiều cao bằng 75% chiều cao màn hình
+            container.style.height = '75vh';
+            container.style.margin = '0';
+            container.style.overflow = 'hidden';
+            container.style.position = 'relative';
+
+            // Khởi tạo scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xFFFFFF);
+
+            // Thêm ánh sáng
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+
+            // Thêm ánh sáng thứ hai từ hướng khác để làm nổi bật mô hình
+            const directionalLight2 = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight2.position.set(-1, 0.5, -1);
+            scene.add(directionalLight2);
+
+            // Khởi tạo camera
+            camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 5); // Đặt camera ở vị trí thích hợp
+
+            // Khởi tạo renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            container.appendChild(renderer.domElement);
+
+            // Thêm controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 2;
+            controls.maxDistance = 20;
+            controls.enableZoom = false; // Vô hiệu hóa zoom bằng chuột
+
+            // Hiển thị thông báo đang tải
+            const loadingInfo = document.getElementById('loading-info');
+            if (loadingInfo) {
+                loadingInfo.style.display = 'block';
+            }
+
+            // Load mô hình GLB
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                modelPath,
+                function (gltf) {
+                    model = gltf.scene;
+
+                    // Căn chỉnh mô hình vào giữa scene
+                    const box = new THREE.Box3().setFromObject(model);
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    // Di chuyển mô hình để tâm của nó ở gốc tọa độ
+                    model.position.x = -center.x;
+                    model.position.y = -center.y;
+                    model.position.z = -center.z;
+
+                    // Thay đổi scale mô hình
+                    model.scale.set(currentScale, currentScale, currentScale);
+
+                    // Thêm góc xoay mặc định cho mô hình (đơn vị là radian)
+                    // model.rotation.x = Math.PI / 4; // Xoay 45 độ quanh trục X
+                    // model.rotation.y = Math.PI / 6; // Xoay 30 độ quanh trục Y
+                    // model.rotation.z = 0;           // Không xoay quanh trục Z
+
+                    scene.add(model);
+
+                    // Tự động điều chỉnh camera để nhìn thấy toàn bộ mô hình
+                    fitCameraToObject(camera, model, controls, 1.2);
+
+                    if (loadingInfo) {
+                        loadingInfo.style.display = 'none';
+                    }
+                },
+                function (xhr) {
+                    // Hiển thị tiến trình tải
+                    if (loadingInfo) {
+                        const percentComplete = Math.round(xhr.loaded / xhr.total * 100);
+                        loadingInfo.textContent = 'Loading model: ' + percentComplete + '%';
+                    }
+                },
+                function (error) {
+                    if (loadingInfo) {
+                        loadingInfo.textContent = 'Error loading model';
+                    }
+                    console.error('Error loading GLB model:', error);
+                }
+            );
+
+            // Xử lý sự kiện resize cửa sổ
+            window.addEventListener('resize', onWindowResize, false);
+        }
+
+        // Hàm để camera tự động điều chỉnh theo kích thước mô hình
+        function fitCameraToObject(camera, object, controls, offset = 1.2) {
+            const boundingBox = new THREE.Box3();
+            boundingBox.setFromObject(object);
+
+            const center = boundingBox.getCenter(new THREE.Vector3());
+            const size = boundingBox.getSize(new THREE.Vector3());
+
+            // Tính toán kích thước lớn nhất của đối tượng
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const fov = camera.fov * (Math.PI / 180);
+
+            // Tính toán khoảng cách camera đến đối tượng
+            let cameraZ = Math.abs(maxDim / (2 * Math.tan(fov / 2)));
+            cameraZ *= offset; // Tăng offset để có khoảng không xung quanh đối tượng
+
+            // Cập nhật vị trí camera để nhìn vào trung tâm mô hình
+            camera.position.set(0, 0, cameraZ);
+
+            camera.near = cameraZ / 100;
+            camera.far = cameraZ * 100;
+            camera.updateProjectionMatrix();
+
+            // Đặt target của controls ở giữa đối tượng
+            if (controls) {
+                controls.target.set(0, 0, 0);
+                controls.update();
+            }
+        }
+
+        function onWindowResize() {
+            // Cập nhật kích thước renderer theo kích thước container
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+    </script>
 @endsection
