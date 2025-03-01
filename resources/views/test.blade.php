@@ -338,8 +338,8 @@
                     model.scale.set(currentScale, currentScale, currentScale);
 
                     // Thêm góc xoay mặc định cho mô hình (đơn vị là radian)
-                    // model.rotation.x = Math.PI / 4; // Xoay 45 độ quanh trục X
-                    // model.rotation.y = Math.PI / 6; // Xoay 30 độ quanh trục Y
+                    model.rotation.x = Math.PI / 6; // Xoay 45 độ quanh trục X
+                    model.rotation.y = - Math.PI / 4; // Xoay 30 độ quanh trục Y
                     // model.rotation.z = 0;           // Không xoay quanh trục Z
 
                     scene.add(model);
